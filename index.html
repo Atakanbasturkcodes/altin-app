@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gold App Web</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <style>
+        /* Window.clearcolor = (0.08, 0.08, 0.08, 1) Karşılığı */
+        body {
+            background-color: #141414;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        /* Kivy BoxLayout ve GridLayout Düzeni */
+        .root-container {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            width: 100%;
+        }
+
+        /* GoldCard Tasarımı (Color(0.16, 0.16, 0.16, 1) ve radius=[18]) */
+        .gold-card {
+            background-color: #292929;
+            border-radius: 18px;
+            padding: 12px;
+            height: 220px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            text-align: center;
+        }
+
+        /* Kivy Label font_size="28sp", bold=True */
+        .card-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ffffff;
+            margin: 0;
+        }
+
+        /* Kivy price_label color=(0.3, 1, 0.3, 1) */
+        .card-price {
+            font-size: 20px;
+            font-weight: bold;
+            color: #4cff4c;
+            margin: 0;
+        }
+
+        /* Kivy TextInput Tasarımının Birebir Aynısı */
+        .card-entry {
+            width: 90%;
+            height: 45px;
+            background-color: #404040;
+            border: none;
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 22px;
+            text-align: center;
+            font-weight: bold;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        /* Kivy result_label color=(1, 0.85, 0.2, 1) */
+        .card-result {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ffd933;
+            margin: 0;
+        }
+
+        /* YENİLE Butonu (background_color=(0.15, 0.45, 0.9, 1)) */
+        .refresh-btn {
+            width: 50%;
+            height: 55px;
+            align-self: center;
+            background-color: #2673e6;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 5px;
+        }
+
+        .refresh-btn:active {
+            background-color: #1a59b8;
+        }
+
+        /* TOPLAM Label (font_size="32sp", color=(1, 0.82, 0.15, 1)) */
+        .total-label {
+            font-size: 26px;
+            font-weight: bold;
+            color: #ffd126;
+            text-align: center;
+            margin: 5px 0 0 0;
+        }
+
+        /* GRAM ALTIN Label (font_size="22sp", color=(1, 0.85, 0.2, 1)) */
+        .gram-label {
+            font-size: 18px;
+            color: #ffd933;
+            text-align: center;
+            margin: 0;
+        }
+
+        /* STATUS Label */
+        .status-label {
+            font-size: 16px;
+            color: #b3b3b3;
+            text-align: center;
+            margin: 0;
+            transition: color 0.3s;
+        }
+
+        /* ERROR Label */
+        .error-label {
+            font-size: 13px;
+            color: #ff6666;
+            text-align: center;
+            margin: 0;
+            min-height: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="root-container">
+    
+    <div class="grid-layout">
+        <div class="gold-card">
+            <p class="card-title">ÇEYREK</p>
+            <p class="card-price" id="price-CEYREK">0</p>
+            <input type="number" inputmode="numeric" class="card-entry" id="entry-CEYREK" value="0">
+            <p class="card-result" id="result-CEYREK">0</p>
+        </div>
+
+        <div class="gold-card">
+            <p class="card-title">YARIM</p>
+            <p class="card-price" id="price-YARIM">0</p>
+            <input type="number" inputmode="numeric" class="card-entry" id="entry-YARIM" value="0">
+            <p class="card-result" id="result-YARIM">0</p>
+        </div>
+
+        <div class="gold-card">
+            <p class="card-title">TAM</p>
+            <p class="card-price" id="price-TAM">0</p>
+            <input type="number" inputmode="numeric" class="card-entry" id="entry-TAM" value="0">
+            <p class="card-result" id="result-TAM">0</p>
+        </div>
+
+        <div class="gold-card">
+            <p class="card-title">ATA</p>
+            <p class="card-price" id="price-ATA">0</p>
+            <input type="number" inputmode="numeric" class="card-entry" id="entry-ATA" value="0">
+            <p class="card-result" id="result-ATA">0</p>
+        </div>
+    </div>
+
+    <button class="refresh-btn" id="refresh-btn">YENİLE</button>
+    <p class="total-label" id="total-label">TOPLAM: 0</p>
+    <p class="gram-label" id="gram-label">GRAM ALTIN: 0,00</p>
+    <p class="status-label" id="status-label">Veriler bekleniyor...</p>
+    <p class="error-label" id="error-label"></p>
+
+</div>
+
+<script>
+    // =========================================================
+    // AYARLAR VE DEĞİŞKENLER
+    // =========================================================
+    let prices = {
+        "CEYREK": 0,
+        "YARIM": 0,
+        "TAM": 0,
+        "ATA": 0,
+        "GRAM": 0
+    };
+
+    let socket = null;
+    let connectedOnce = false;
+
+    const keys = ["CEYREK", "YARIM", "TAM", "ATA"];
+
+    // =========================================================
+    // LOAD / SAVE (Hafıza İşlemleri)
+    // =========================================================
+    function loadInputs() {
+        keys.forEach(key => {
+            const savedValue = localStorage.getItem("gold_" + key);
+            if (savedValue !== null) {
+                document.getElementById("entry-" + key).value = savedValue;
+            }
+        });
+    }
+
+    function saveInputs() {
+        keys.forEach(key => {
+            const val = document.getElementById("entry-" + key).value;
+            localStorage.setItem("gold_" + key, val);
+        });
+    }
+
+    // =========================================================
+    // HESAPLAMA VE UI GÜNCELLEME (Kivy'deki update_ui karşılığı)
+    // =========================================================
+    function formatMoney(value, decimals = 0) {
+        let options = { minimumFractionDigits: decimals, maximumFractionDigits: decimals };
+        let formatted = Number(value).toLocaleString('de-DE', options); // Örn: 1.250,00 veya 5.000
+        return formatted;
+    }
+
+    function updateUI() {
+        let total = 0;
+
+        keys.forEach(key => {
+            let price = prices[key];
+            document.getElementById("price-" + key).innerText = formatMoney(price);
+
+            let entryText = document.getElementById("entry-" + key).value.trim();
+            let amount = entryText === "" ? 0 : parseInt(entryText);
+            if (isNaN(amount)) amount = 0;
+
+            let result = Math.round(price * amount);
+            total += result;
+
+            document.getElementById("result-" + key).innerText = formatMoney(result);
+        });
+
+        document.getElementById("total-label").innerText = "TOPLAM: " + formatMoney(total);
+        document.getElementById("gram-label").innerText = "GRAM ALTIN: " + formatMoney(prices["GRAM"], 2);
+    }
+
+    // =========================================================
+    // SOCKET BAĞLANTISI (Orijinal Mantığın Birebiri)
+    // =========================================================
+    function connectSocket() {
+        document.getElementById("status-label").innerText = "Sunucuya bağlanılıyor...";
+        document.getElementById("status-label").style.color = "#b3b3b3";
+        document.getElementById("error-label").innerText = "";
+
+        // Eğer açıkta bağlantı varsa önce emniyetli kapat
+        if (socket) {
+            try { socket.disconnect(); } catch(e) {}
+        }
+
+        // Harem Altın Web Socket Yapılandırması
+        socket = io("https://hrmsocketonly.haremaltin.com", {
+            transports: ["websocket"],
+            extraHeaders: {
+                "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
+            },
+            timeout: 15000,
+            forceNew: true
+        });
+
+        // Senin orijinal "price_changed" dinleyicin
+        socket.on("price_changed", function(msg) {
+            try {
+                let d = msg.data || {};
+
+                let newPrices = {
+                    "CEYREK": Math.round(parseFloat(d.CEYREK_ESKI?.alis || 0)),
+                    "YARIM": Math.round(parseFloat(d.YARIM_ESKI?.alis || 0)),
+                    "TAM": Math.round(parseFloat(d.TEK_ESKI?.alis || 0)),
+                    "ATA": Math.round(parseFloat(d.ATA_ESKI?.alis || 0)),
+                    "GRAM": parseFloat(d.KULCEALTIN?.alis || 0)
+                };
+
+                // Boş veri geldiyse ignore et (Orijinal kodundaki kontrol)
+                if (newPrices.CEYREK === 0 && newPrices.YARIM === 0 && newPrices.TAM === 0 && newPrices.ATA === 0) {
+                    return;
+                }
+
+                prices = newPrices;
+                connectedOnce = true;
+
+                document.getElementById("status-label").innerText = "Veriler alındı!";
+                document.getElementById("status-label").style.color = "#33ff33";
+                document.getElementById("error-label").innerText = "";
+
+                updateUI();
+
+                // İstediğin gibi veriyi aldığı saniye bağlantıyı anında koparır
+                socket.disconnect();
+
+            } catch (err) {
+                document.getElementById("status-label").innerText = "Veriler alınamadı!";
+                document.getElementById("status-label").style.color = "#ff3333";
+                document.getElementById("error-label").innerText = "Veri parse hatası: " + err.message;
+            }
+        });
+
+        socket.on("connect_error", function(err) {
+            document.getElementById("status-label").innerText = connectedOnce ? "Veriler alınamadı!" : "Veriler bekleniyor...";
+            document.getElementById("status-label").style.color = connectedOnce ? "#ff3333" : "#b3b3b3";
+            document.getElementById("error-label").innerText = "Bağlantı hatası: " + err.message;
+        });
+    }
+
+    // =========================================================
+    // TETİKLEYİCİLER (EVENTS)
+    // =========================================================
+    
+    // Manuel Yenileme Butonu Basıldığında
+    document.getElementById("refresh-btn").addEventListener("click", function() {
+        connectSocket();
+    });
+
+    // Kutulardaki rakam değiştikçe anlık hesapla ve kaydet
+    keys.forEach(key => {
+        document.getElementById("entry-" + key).addEventListener("input", function() {
+            saveInputs();
+            updateUI();
+        });
+    });
+
+    // Sayfa İlk Açıldığında Çalışacak Bölüm
+    window.addEventListener("DOMContentLoaded", function() {
+        loadInputs();
+        updateUI();
+        connectSocket();
+    });
+</script>
+
+</body>
+</html>
