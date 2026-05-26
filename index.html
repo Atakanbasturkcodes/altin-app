@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Gold App Web</title>
+    
+    <link rel="apple-touch-icon" href="https://i.imgur.com/i6wFHkV.jpeg">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <style>
         /* Window.clearcolor = (0.08, 0.08, 0.08, 1) Karşılığı */
@@ -223,11 +230,11 @@
     }
 
     // =========================================================
-    // HESAPLAMA VE UI GÜNCELLEME (Kivy'deki update_ui karşılığı)
+    // HESAPLAMA VE UI GÜNCELLEME
     // =========================================================
     function formatMoney(value, decimals = 0) {
         let options = { minimumFractionDigits: decimals, maximumFractionDigits: decimals };
-        let formatted = Number(value).toLocaleString('de-DE', options); // Örn: 1.250,00 veya 5.000
+        let formatted = Number(value).toLocaleString('de-DE', options);
         return formatted;
     }
 
@@ -253,19 +260,17 @@
     }
 
     // =========================================================
-    // SOCKET BAĞLANTISI (Orijinal Mantığın Birebiri)
+    // SOCKET BAĞLANTISI
     // =========================================================
     function connectSocket() {
         document.getElementById("status-label").innerText = "Sunucuya bağlanılıyor...";
         document.getElementById("status-label").style.color = "#b3b3b3";
         document.getElementById("error-label").innerText = "";
 
-        // Eğer açıkta bağlantı varsa önce emniyetli kapat
         if (socket) {
             try { socket.disconnect(); } catch(e) {}
         }
 
-        // Harem Altın Web Socket Yapılandırması
         socket = io("https://hrmsocketonly.haremaltin.com", {
             transports: ["websocket"],
             extraHeaders: {
@@ -275,7 +280,6 @@
             forceNew: true
         });
 
-        // Senin orijinal "price_changed" dinleyicin
         socket.on("price_changed", function(msg) {
             try {
                 let d = msg.data || {};
@@ -288,7 +292,6 @@
                     "GRAM": parseFloat(d.KULCEALTIN?.alis || 0)
                 };
 
-                // Boş veri geldiyse ignore et (Orijinal kodundaki kontrol)
                 if (newPrices.CEYREK === 0 && newPrices.YARIM === 0 && newPrices.TAM === 0 && newPrices.ATA === 0) {
                     return;
                 }
@@ -301,8 +304,6 @@
                 document.getElementById("error-label").innerText = "";
 
                 updateUI();
-
-                // İstediğin gibi veriyi aldığı saniye bağlantıyı anında koparır
                 socket.disconnect();
 
             } catch (err) {
@@ -322,13 +323,10 @@
     // =========================================================
     // TETİKLEYİCİLER (EVENTS)
     // =========================================================
-    
-    // Manuel Yenileme Butonu Basıldığında
     document.getElementById("refresh-btn").addEventListener("click", function() {
         connectSocket();
     });
 
-    // Kutulardaki rakam değiştikçe anlık hesapla ve kaydet
     keys.forEach(key => {
         document.getElementById("entry-" + key).addEventListener("input", function() {
             saveInputs();
@@ -336,7 +334,6 @@
         });
     });
 
-    // Sayfa İlk Açıldığında Çalışacak Bölüm
     window.addEventListener("DOMContentLoaded", function() {
         loadInputs();
         updateUI();
